@@ -5,7 +5,7 @@ public class MyThread extends Thread {
     @Override
     public void run() {
         try {
-            while (true) {
+            while (!isInterrupted()) {
                 System.out.println(String.format("Я %s. Всем привет!", Thread.currentThread().getName()));
                 sleep(2500);
             }
