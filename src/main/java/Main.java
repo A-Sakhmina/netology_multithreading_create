@@ -1,28 +1,41 @@
 import threads.MyThread;
 
+import java.util.Arrays;
+import java.util.concurrent.*;
+
 public class Main {
-    public static void main(String[] args) {
-        //группа потоков
-        ThreadGroup group = new ThreadGroup("group");
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
 
         System.out.println("Создаю потоки...");
 
-        MyThread task = new MyThread();
+        //создаём задачу с результатом типа Integer
+        int taskNumber = 5;
+        Callable<Integer>[] myCallable = new MyThread[taskNumber];
+        for (int i = 0; i < taskNumber; i++) {
+            myCallable[i] = new MyThread();
+        }
 
         int threadNumber = 3;
-        final Thread[] threads = new Thread[threadNumber];
-        //добавление потоков в группу
-        for (int i = 0; i < threadNumber; i++) {
-            threads[i] = new Thread(group, task, String.format("поток %d", i));
+        //создаём пул потоков фиксированного размера
+        final ExecutorService threadPool = Executors.newFixedThreadPool(threadNumber);
+
+
+        for (int i = 0; i < taskNumber; i++) {
+            System.out.printf("\nЗадача %d\n", i);
+            //отправляем задачу на выполнение в пул потоков
+            final Future<Integer> task = threadPool.submit(myCallable[i]);
+            //получаем результат
+            final Integer resultOfTask = task.get();
+            System.out.println("Количество сообщений = " + resultOfTask);
         }
 
-        // запуск потоков
-        for (Thread thread : threads) {
-            thread.start();
-        }
+        System.out.println("\nПолучение результата от одной из задач");
+        int result = threadPool.invokeAny(Arrays.stream(myCallable).toList());
+        Thread.sleep(15000);
+        System.out.println("res=" + result);
 
-        //завершаем потоки
-        group.interrupt();
+        //завершаем работу потоков
+        threadPool.shutdown();
 
     }
 }
